@@ -8,15 +8,18 @@ French
 Portuguese
 Russian
 Chinese
+
 How to Use
 Place Videos: Add your .mp4, .mov, .avi, .mkv, or .webm video files into the input_videos folder.
+
 Configure Environment:
 Rename .env.example to .env (if you've provided an example file, which is good practice).
 Modify the .env file to add your API keys (for services like Groq, OpenRouter, AssemblyAI) and to customize model preferences or other settings as needed.
+
 Run the Script:
-Bash
 
 python app.py
+
 The script will then guide you through selecting processing services and translation options. Output files (transcripts, summaries) will be saved in the transcripts and summaries folders.
 Features
 Multiple Audio-to-Text Options: Choose between local Whisper, Groq API, or AssemblyAI.
