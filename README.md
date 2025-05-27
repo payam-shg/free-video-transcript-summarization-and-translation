@@ -20,7 +20,7 @@ Modify the .env file to add your API keys (for services like Groq, OpenRouter, A
 
 Run the Script:
 
-python app.py
+`python app.py`
 
 The script will then guide you through selecting processing services and translation options. Output files (transcripts, summaries) will be saved in the transcripts and summaries folders.
 
