@@ -1,18 +1,18 @@
 import os
 import time
 import requests
-import json # For OpenRouter
+import json
 from dotenv import load_dotenv
 
 # Import service-specific libraries
 try:
-    import whisper # For local Whisper
+    import whisper
 except ImportError:
     print("Local Whisper library not found. Please install with 'pip install openai-whisper'")
     whisper = None
 
 try:
-    from moviepy import VideoFileClip, AudioFileClip # Added AudioFileClip
+    from moviepy import VideoFileClip, AudioFileClip
 except ImportError:
     print("MoviePy library not found. Please install with 'pip install moviepy'")
     VideoFileClip = None
@@ -22,7 +22,7 @@ try:
     from tqdm import tqdm
 except ImportError:
     print("TQDM library not found. Please install with 'pip install tqdm'")
-    def tqdm(iterable, *args, **kwargs): # Dummy tqdm
+    def tqdm(iterable, *args, **kwargs):
         for item in iterable:
             if 'desc' in kwargs:
                 print(f"{kwargs['desc']}: Processing item...")
@@ -43,8 +43,6 @@ except ImportError:
     SimpleDocTemplate = Paragraph = getSampleStyleSheet = pdfmetrics = TTFont = None
     TA_LEFT = 0
 
-
-# Load environment variables from .env file
 load_dotenv()
 
 # ========== API Keys & Model Configurations ========== #
@@ -122,16 +120,15 @@ def initialize_selected_clients(audio_service_key, text_service_key):
 
 def get_user_choice(prompt_message, options_dict):
     print(f"\n{prompt_message}")
-    for key, (value, description) in options_dict.items(): # value is now the dict, description is display name
+    for key, (value, description) in options_dict.items():
         print(f"  {key}. {description} (Service Code: {key if isinstance(value, str) else value.get('code', value)})") # Adjusted for new structure
     while True:
         choice_num = input(f"Enter the number of your choice: ")
         if choice_num in options_dict:
-            return options_dict[choice_num][0] # Return the value part (which can be a dict or string)
+            return options_dict[choice_num][0]
         else:
             print("Invalid choice. Please enter a number from the list above.")
 
-# NEW FUNCTION for Yes/No questions
 def get_yes_no_choice(prompt_message):
     while True:
         choice = input(f"\n{prompt_message} (y/n): ").lower()
@@ -188,7 +185,7 @@ def save_transcript_as_pdf(text_content, pdf_path, font_to_use):
         return True
     except Exception as e: tqdm.write(f"❌ Error saving PDF for '{pdf_path}': {str(e)}"); return False
 
-# --- Audio to Text Implementations ---
+# --- Audio to Text Implementations --- #
 def transcribe_audio_whisper_local(audio_path_to_use):
     if not whisper: return TranscriptionResult(None, error_message="Local Whisper library not available.")
     try:
@@ -243,7 +240,7 @@ def transcribe_audio_dispatcher(original_audio_path, service_key):
     tqdm.write(f"Unknown audio service key: {service_key}. Defaulting to local Whisper."); return transcribe_audio_whisper_local(original_audio_path)
 
 
-# --- Text Processing Implementations ---
+# --- Text Processing Implementations --- #
 def process_text_ollama_local(prompt, task):
     data = {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
     try:
@@ -298,12 +295,12 @@ if __name__ == "__main__":
         "2": ("groq", "Groq API (requires GROQ_API_KEY)"),
         "3": ("assemblyai", "AssemblyAI API (requires ASSEMBLYAI_API_KEY)")
     }
-    TEXT_SERVICE_OPTIONS = { # Used for Summarization AND Translation
+    TEXT_SERVICE_OPTIONS = {
         "1": ("ollama_local", "Local Ollama"),
         "2": ("groq", "Groq API (requires GROQ_API_KEY)"),
         "3": ("openrouter", "OpenRouter API (requires OPENROUTER_API_KEY)")
     }
-    # NEW: Language options for translation
+
     TRANSLATION_LANGUAGE_OPTIONS = {
         "1": ({"code": "fa", "llm_name": "Persian", "display": "Persian (فارسی)", "emoji": "🇮🇷"}, "Persian (فارسی)"),
         "2": ({"code": "it", "llm_name": "Italian", "display": "Italian", "emoji": "🇮🇹"}, "Italian"),
@@ -318,7 +315,7 @@ if __name__ == "__main__":
     chosen_audio_service_key = get_user_choice("Please select the Audio-to-Text service:", AUDIO_SERVICE_OPTIONS)
     chosen_text_service_key = get_user_choice("Please select the Text Processing service (for summarization & translation):", TEXT_SERVICE_OPTIONS)
 
-    # NEW: Ask if translation is needed
+
     perform_translation = get_yes_no_choice("Do you want to translate the transcript and summary?")
     
     chosen_translation_lang_details = None
@@ -354,7 +351,6 @@ if __name__ == "__main__":
             text_path_pdf_en = os.path.join(TEXT_FOLDER, f"{base_name}.pdf")
             summary_path_en = os.path.join(SUMMARY_FOLDER, f"{base_name}_summary.txt")
 
-            # Paths for translated files - will be defined if translation is chosen
             text_path_txt_translated = None
             summary_path_translated = None
             current_lang_code = None
@@ -423,7 +419,6 @@ if __name__ == "__main__":
             if not english_transcript_content:
                 tqdm.write(f"❌ No English transcript for {video_file} to proceed. Skipping."); continue
 
-            # Step 3: Translate Transcript (if chosen)
             if perform_translation and text_path_txt_translated and current_lang_llm_name:
                 if os.path.exists(text_path_txt_translated): 
                     tqdm.write(f"{current_lang_emoji} Translated ({current_lang_display_name}) TXT '{text_path_txt_translated}' exists. Skipping.")
@@ -435,7 +430,6 @@ if __name__ == "__main__":
                     else: 
                         tqdm.write(f"❌ Translated ({current_lang_display_name}) transcript generation failed.")
 
-            # Step 4: Summarize English Text
             english_summary = None
             if os.path.exists(summary_path_en):
                 tqdm.write(f"✍️ English summary '{summary_path_en}' exists. Loading.")
@@ -450,7 +444,6 @@ if __name__ == "__main__":
                 else: tqdm.write("❌ English summarization failed.")
             else: tqdm.write("📖 Text not long enough for summarization (less than 100 words).")
 
-            # Step 5: Translate Summary (if chosen and English summary exists)
             if perform_translation and summary_path_translated and current_lang_llm_name:
                 if english_summary:
                     if os.path.exists(summary_path_translated): 
